@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import { nextTick } from 'process';
 
 (async () => {
 
@@ -17,7 +18,6 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   // GET /filteredimage?image_url={{URL}}
   // endpoint to filter an image from a public url.
   // IT SHOULD
-  //    1
   //    1. validate the image_url query
   //    2. call filterImageFromURL(image_url) to filter the image
   //    3. send the resulting file in the response
@@ -26,6 +26,26 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   //    image_url: URL of a publicly accessible image
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
+
+  app.get( "/filteredimage", async ( req, res ) => {
+    let { image_url } = req.query;
+    let filteredpath:string;
+    let images:Array<string> = []; 
+    
+    !image_url
+    ? res.status(400).send('No url specified') 
+    : null
+    
+    filterImageFromURL(image_url)
+    .then(response => {
+      filteredpath = response;
+      images.push(filteredpath);
+      res.status(200).sendFile(filteredpath);
+      res.on('finish', () => deleteLocalFiles(images));
+    })
+      
+  })
+
 
   /**************************************************************************** */
 
